@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Don pour XT00_ombres</title>
+<style>
+:root{--bg:#181226;--panel:#231a36;--line:#3a2d57;--text:#efe9f7;--mute:#a99dc4;--accent:#f2b66d;--ink:#1d1329;color-scheme:dark}
+@media (prefers-color-scheme:light){:root{--bg:#f4f0fa;--panel:#fff;--line:#d9cfea;--text:#241a38;--mute:#645a7c;--accent:#b8691a;--ink:#fff;color-scheme:light}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding:max(24px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom))}
+main{max-width:520px;margin:0 auto}
+h1{font:700 clamp(2rem,8vw,2.8rem)/1.1 "Iowan Old Style",Georgia,serif;margin:.6em 0 .2em;letter-spacing:-.01em}
+.sub{color:var(--mute);margin:0 0 1.6em}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+label{display:block;font-weight:600;margin:0 0 6px}
+.row{display:flex;gap:10px;margin-bottom:18px}
+select,input,textarea{width:100%;font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px}
+select{width:150px;max-width:42vw;text-overflow:ellipsis}
+input[type=number]{font-size:1.4rem;font-weight:700}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.presets{display:grid;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));gap:10px;margin-bottom:20px}
+.presets button{font:inherit;font-weight:700;padding:12px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--text);cursor:pointer}
+.presets button[aria-pressed=true]{background:var(--accent);color:var(--ink);border-color:var(--accent)}
+#go{width:100%;font:inherit;font-weight:700;font-size:1.1rem;padding:15px;border:0;border-radius:12px;background:var(--accent);color:var(--ink);cursor:pointer}
+#go:disabled{opacity:.45;cursor:not-allowed}
+#msg{min-height:1.5em;margin:10px 0 0;color:var(--mute);font-size:.95rem}
+.legal{margin-top:24px;color:var(--mute);font-size:.88rem}
+.legal a,.legal button{color:var(--mute);background:none;border:0;padding:0;font:inherit;text-decoration:underline;cursor:pointer}
+#admin{display:none;margin-top:28px}
+#admin.on{display:block}
+#admin h2{font:700 1.2rem Georgia,serif;margin:0 0 14px}
+#admin .f{margin-bottom:14px}
+#admin small{color:var(--mute);display:block;margin-top:4px}
+textarea{min-height:170px;font:13px/1.4 ui-monospace,Menlo,monospace}
+.sec{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:10px;font-size:.85rem;color:var(--mute)}
+@media (prefers-reduced-motion:no-preference){.presets button,#go{transition:background .15s}}
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title"></h1>
+  <p class="sub" id="subtitle"></p>
+
+  <section class="card" aria-labelledby="t2">
+    <div class="row">
+      <div>
+        <label for="cur">Devise</label>
+        <select id="cur"></select>
+      </div>
+      <div style="flex:1">
+        <label for="amt">Montant</label>
+        <input id="amt" type="number" inputmode="decimal" step="any" min="0" placeholder="0.00">
+      </div>
+    </div>
+    <div class="presets" id="presets" role="group" aria-label="Montants rapides"></div>
+    <button id="go" type="button" disabled>Faire un don</button>
+    <p id="msg" role="status" aria-live="polite"></p>
+  </section>
+
+  <p class="legal" id="legal"></p>
+
+  <section id="admin" class="card" aria-label="Mode administrateur">
+    <h2>Mode administrateur (aperçu local)</h2>
+    <div class="f"><label for="a_title">Titre</label><input id="a_title"></div>
+    <div class="f"><label for="a_sub">Sous-titre</label><input id="a_sub"></div>
+    <div class="f"><label for="a_tag">Pseudo Revolut.me</label><input id="a_tag" autocomplete="off"><small>Le texte après revolut.me/ dans ton lien</small></div>
+    <div class="f"><label for="a_cur">Devises (codes séparés par des virgules)</label><input id="a_cur"><small>Les premières apparaissent en tête. Mets * pour ajouter toutes les autres devises du monde.</small></div>
+    <div class="f"><label for="a_pre">Montants rapides (séparés par des virgules)</label><input id="a_pre"></div>
+    <div class="f"><label for="a_min">Minimum</label><input id="a_min" type="number" step="0.01"></div>
+    <div class="f"><label for="a_max">Maximum</label><input id="a_max" type="number" step="0.01"></div>
+    <div class="f"><label for="a_legal">Texte de confidentialité</label><textarea id="a_legal" style="min-height:90px;font:inherit"></textarea></div>
+    <label for="a_out">Configuration à copier</label>
+    <textarea id="a_out" readonly></textarea>
+    <div class="sec">Ce panneau ne sauvegarde rien et ne contient aucun mot de passe : il met à jour l’aperçu et génère la configuration. Pour publier, colle-la dans <b>config.json</b> sur GitHub (protégé par ton compte et ta 2FA).</div>
+  </section>
+</main>
+
+<script>
+"use strict";
+/* ===== CONFIGURATION : seule partie à modifier (ou via le panneau #admin) ===== */
+const CONFIG = {
+  title: "Don pour XT00_ombres",
+  subtitle: "Merci de soutenir la chaîne. Chaque don est libre et apprécié.",
+  revolutTag: "VOTRE_TAG",
+  currencies: ["EUR", "USD", "GBP", "CAD", "CHF", "*"], /* "*" = toutes les autres devises du monde */
+  presets: [2, 5, 10, 20, 50],
+  min: 1,
+  max: 500,
+  legal: "Aucun cookie, aucun traceur, aucune donnée enregistrée sur ce site. Le paiement est traité par Revolut, qui applique sa propre politique de confidentialité. Les dons sont volontaires et non remboursables par la chaîne."
+};
+/* ===== FIN CONFIGURATION ===== */
+
+const $ = id => document.getElementById(id);
+const SYM = {EUR:"€",USD:"$",GBP:"£",CAD:"CA$",CHF:"CHF"};
+let cfg = null;
+
+function sanitize(c){
+  const cur = (Array.isArray(c.currencies)?c.currencies:[]).map(x=>String(x).trim().toUpperCase()).filter(x=>x==="*"||/^[A-Z]{3}$/.test(x));
+  const pre = (Array.isArray(c.presets)?c.presets:[]).map(Number).filter(n=>isFinite(n)&&n>0).slice(0,8);
+  const min = Math.max(0.01, Number(c.min)||1), max = Math.max(min, Number(c.max)||500);
+  return {
+    title: String(c.title||"").slice(0,80), subtitle: String(c.subtitle||"").slice(0,200),
+    revolutTag: String(c.revolutTag||"").trim(), currencies: cur.length?cur:["EUR"],
+    presets: pre, min, max, legal: String(c.legal||"").slice(0,800)
+  };
+}
+
+let DN = null; try{ DN = new Intl.DisplayNames(["fr"],{type:"currency"}); }catch(e){}
+const cname = c => { try{ return DN ? DN.of(c) : c; }catch(e){ return c; } };
+function allCodes(){
+  let l; try{ l = Intl.supportedValuesOf("currency"); }catch(e){ l = ["AUD","BRL","CAD","CHF","CNY","EUR","GBP","JPY","MAD","USD"]; }
+  return l.sort((a,b)=>cname(a).localeCompare(cname(b),"fr"));
+}
+function expand(list){
+  const out = [];
+  list.forEach(c => c==="*" ? out.push(...allCodes()) : out.push(c));
+  return [...new Set(out)];
+}
+function minorDigits(c){
+  try{ return new Intl.NumberFormat("en",{style:"currency",currency:c}).resolvedOptions().maximumFractionDigits; }catch(e){ return 2; }
+}
+
+function render(){
+  document.title = cfg.title;
+  $("title").textContent = cfg.title;
+  $("subtitle").textContent = cfg.subtitle;
+  $("legal").textContent = cfg.legal;
+  const cur = $("cur"), keep = cur.value, list = expand(cfg.currencies);
+  cur.replaceChildren(...list.map(c=>{const o=document.createElement("option");o.value=c;o.textContent=c+" – "+cname(c);return o;}));
+  if(list.includes(keep)) cur.value = keep;
+  const box = $("presets");
+  box.replaceChildren(...cfg.presets.map(n=>{
+    const b=document.createElement("button");b.type="button";b.textContent=n+" "+(SYM[cur.value]||cur.value);
+    b.setAttribute("aria-pressed", String(Number($("amt").value)===n));
+    b.onclick=()=>{$("amt").value=n;update();};return b;}));
+  update();
+}
+
+function validate(){
+  const v = Number($("amt").value), tag = cfg.revolutTag;
+  if(!/^[A-Za-z0-9_.-]{2,40}$/.test(tag) || tag==="VOTRE_TAG") return {ok:false,m:"Lien Revolut non configuré."};
+  if(!$("amt").value) return {ok:false,m:""};
+  if(!isFinite(v)||v<cfg.min) return {ok:false,m:"Minimum : "+cfg.min+" "+$("cur").value};
+  if(v>cfg.max) return {ok:false,m:"Maximum : "+cfg.max+" "+$("cur").value};
+  return {ok:true,m:"Tu seras redirigé vers Revolut pour payer."};
+}
+
+function update(){
+  const r = validate();
+  $("go").disabled = !r.ok; $("msg").textContent = r.m;
+  const sym = SYM[$("cur").value]||$("cur").value;
+  [...$("presets").children].forEach((b,i)=>{b.textContent=cfg.presets[i]+" "+sym;b.setAttribute("aria-pressed",String(Number($("amt").value)===cfg.presets[i]));});
+}
+
+$("go").onclick = () => {
+  const r = validate(); if(!r.ok) return;
+  const minor = Math.round(Number($("amt").value)*Math.pow(10,minorDigits($("cur").value)));
+  const url = "https://revolut.me/"+encodeURIComponent(cfg.revolutTag)+"?amount="+minor+"&currency="+encodeURIComponent($("cur").value);
+  window.open(url, "_blank", "noopener,noreferrer");
+};
+$("amt").addEventListener("input", update);
+$("cur").addEventListener("change", update);
+
+/* Chargement : config.json si présent (même domaine uniquement), sinon CONFIG intégrée */
+async function init(){
+  let src = CONFIG;
+  try{ const r = await fetch("config.json",{cache:"no-store"}); if(r.ok) src = await r.json(); }catch(e){}
+  cfg = sanitize(src); render();
+  if(location.hash==="#admin") openAdmin();
+}
+
+/* Panneau admin : aperçu + génération de config, aucune sauvegarde, aucun secret */
+function openAdmin(){
+  $("admin").classList.add("on");
+  const f = {a_title:"title",a_sub:"subtitle",a_tag:"revolutTag",a_min:"min",a_max:"max",a_legal:"legal"};
+  Object.entries(f).forEach(([id,k])=>$(id).value=cfg[k]);
+  $("a_cur").value = cfg.currencies.join(", "); $("a_pre").value = cfg.presets.join(", ");
+  const sync = () => {
+    cfg = sanitize({title:$("a_title").value,subtitle:$("a_sub").value,revolutTag:$("a_tag").value,
+      currencies:$("a_cur").value.split(","),presets:$("a_pre").value.split(","),
+      min:$("a_min").value,max:$("a_max").value,legal:$("a_legal").value});
+    $("a_out").value = JSON.stringify(cfg,null,2); render();
+  };
+  ["a_title","a_sub","a_tag","a_cur","a_pre","a_min","a_max","a_legal"].forEach(id=>$(id).addEventListener("input",sync));
+  $("a_out").value = JSON.stringify(cfg,null,2);
+}
+window.addEventListener("hashchange",()=>{ if(location.hash==="#admin"&&cfg) openAdmin(); });
+init();
+</script>
+</body>
+</html>
